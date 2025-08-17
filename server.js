@@ -7,6 +7,10 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
     path: '/tetris/socket.io',
+    cors: {
+        origin: process.env.SERVER_URL,
+        methods: ["GET", "POST"]
+    }
 });
 
 app.use(express.static('public'));
