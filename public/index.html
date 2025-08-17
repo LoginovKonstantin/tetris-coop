@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #1a1a1a;
+        }
+        canvas {
+            border: 2px solid #fff;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const GRID_SIZE = 30;
+    let grid = [];
+    let players = {};
+    let playerId = null;
+
+    function resizeCanvas(gridWidth, gridHeight) {
+        const maxWidth = window.innerWidth * 0.9;
+        const maxHeight = window.innerHeight * 0.9;
+        const size = Math.min(maxWidth / gridWidth, maxHeight / gridHeight);
+        canvas.width = gridWidth * size;
+        canvas.height = gridHeight * size;
+        ctx.scale(size, size);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Draw grid
+        for (let y = 0; y < grid.length; y++) {
+            for (let x = 0; x < grid[y].length; x++) {
+                if (grid[y][x]) {
+                    ctx.fillStyle = '#555';
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+        // Draw players
+        Object.entries(players).forEach(([id, player]) => {
+            if (!player.active) return;
+            ctx.fillStyle = id === playerId ? '#0ff' : '#f0f';
+            for (let i = 0; i < player.tetromino.shape.length; i++) {
+                for (let j = 0; j < player.tetromino.shape[i].length; j++) {
+                    if (player.tetromino.shape[i][j]) {
+                        ctx.fillRect(player.tetromino.x + j, player.tetromino.y + i, 1, 1);
+                    }
+                }
+            }
+        });
+    }
+
+    function rotateShape(shape) {
+        const newShape = Array(shape[0].length).fill().map(() => Array(shape.length).fill(0));
+        for (let i = 0; i < shape.length; i++) {
+            for (let j = 0; j < shape[i].length; j++) {
+                newShape[j][shape.length - 1 - i] = shape[i][j];
+            }
+        }
+        return newShape;
+    }
+
+    socket.on('init', (data) => {
+        grid = data.grid;
+        players = data.players;
+        playerId = socket.id;
+        resizeCanvas(grid[0].length, grid.length);
+        draw();
+    });
+
+    socket.on('update', (newPlayers) => {
+        players = newPlayers;
+        draw();
+    });
+
+    socket.on('gridUpdate', (newGrid) => {
+        grid = newGrid;
+        draw();
+    });
+
+    socket.on('gameOver', () => {
+        alert('Game Over! Starting new game...');
+    });
+
+    socket.on('roomFull', () => {
+        alert('Room is full!');
+        window.location.reload();
+    });
+
+    socket.on('fall', () => {
+        socket.emit('fall');
+    });
+
+    document.addEventListener('keydown', (e) => {
+        const player = players[playerId];
+        if (!player || !player.active) return;
+
+        let action = {};
+        switch (e.key) {
+            case 'ArrowLeft':
+                action.dx = -1;
+                break;
+            case 'ArrowRight':
+                action.dx = 1;
+                break;
+            case 'ArrowDown':
+                socket.emit('fall');
+                break;
+            case 'ArrowUp':
+                action.shape = rotateShape(player.tetromino.shape);
+                break;
+        }
+        if (Object.keys(action).length) {
+            socket.emit('move', action);
+        }
+    });
+
+    window.addEventListener('resize', () => resizeCanvas(grid[0].length, grid.length));
+</script>
+</body>
+</html>
