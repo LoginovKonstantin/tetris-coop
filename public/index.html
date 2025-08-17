@@ -22,9 +22,12 @@
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
-<script src="/socket.io/socket.io.js"></script>
+<script src="/tetris/socket.io/socket.io.js"></script>
+
 <script>
-    const socket = io();
+    const socket = io({
+        path: '/tetris/socket.io'
+    });
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const GRID_SIZE = 30;

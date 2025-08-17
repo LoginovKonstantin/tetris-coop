@@ -4,9 +4,12 @@ const http = require('http');
 const socketIo = require('socket.io');
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
 
-app.use(express.static('public'));
+const io = socketIo(server, {
+    path: '/tetris/socket.io',
+});
+
+app.use('/tetris', express.static('public')); // Статика по пути /tetris
 
 // Game constants
 const GRID_WIDTH = 20;
@@ -112,8 +115,8 @@ function notify() {
     const serverUrl = process.env.SERVER_URL; // Адрес сервера, можно взять из переменной окружения или задать явно
     const message = `В тетрис кто-то зашёл, заходи тоже: <a href="${serverUrl}">Играть</a>`;
 
-    axios.get(`${url}/bot${token}/sendMessage?parse_mode=html&chat_id=${chatId}&text=${message}`)
-        .catch(error => console.log('Ошибка отправки сообщения:', error));
+    // axios.get(`${url}/bot${token}/sendMessage?parse_mode=html&chat_id=${chatId}&text=${message}`)
+    //     .catch(error => console.log('Ошибка отправки сообщения:', error));
 }
 
 // Socket.IO connection handling
@@ -200,6 +203,6 @@ setInterval(() => {
     });
 }, FALL_SPEED);
 
-server.listen(3000, () => {
-    console.log('Server running on port 3000');
+server.listen(3001, () => {
+    console.log('Server running on port 3001');
 });
