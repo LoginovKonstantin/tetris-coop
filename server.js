@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const http = require('http');
 const socketIo = require('socket.io');
 const app = express();
@@ -104,6 +105,17 @@ function resetGame() {
     });
 }
 
+function notify() {
+    const token = process.env.A_TELEGRAM_TOKEN;
+    const chatId = process.env.A_TELEGRAM_CHAT_ID;
+    const url = process.env.TELEGRAM_URL;
+    const serverUrl = process.env.SERVER_URL; // Адрес сервера, можно взять из переменной окружения или задать явно
+    const message = `В тетрис кто-то зашёл, заходи тоже: <a href="${serverUrl}">Играть</a>`;
+
+    axios.get(`${url}/bot${token}/sendMessage?parse_mode=html&chat_id=${chatId}&text=${message}`)
+        .catch(error => console.log('Ошибка отправки сообщения:', error));
+}
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
     if (gameState.playerCount >= MAX_PLAYERS) {
@@ -111,6 +123,8 @@ io.on('connection', (socket) => {
         socket.disconnect();
         return;
     }
+
+    notify();
 
     gameState.playerCount++;
     gameState.players[socket.id] = {
