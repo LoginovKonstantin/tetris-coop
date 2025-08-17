@@ -9,7 +9,7 @@ const io = socketIo(server, {
     path: '/tetris/socket.io',
 });
 
-app.use('/tetris', express.static('public')); // Статика по пути /tetris
+app.use(express.static('public'));
 
 // Game constants
 const GRID_WIDTH = 20;
@@ -115,8 +115,8 @@ function notify() {
     const serverUrl = process.env.SERVER_URL; // Адрес сервера, можно взять из переменной окружения или задать явно
     const message = `В тетрис кто-то зашёл, заходи тоже: <a href="${serverUrl}">Играть</a>`;
 
-    // axios.get(`${url}/bot${token}/sendMessage?parse_mode=html&chat_id=${chatId}&text=${message}`)
-    //     .catch(error => console.log('Ошибка отправки сообщения:', error));
+    axios.get(`${url}/bot${token}/sendMessage?parse_mode=html&chat_id=${chatId}&text=${message}`)
+        .catch(error => console.log('Ошибка отправки сообщения:', error));
 }
 
 // Socket.IO connection handling
